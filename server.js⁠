@@ -8,7 +8,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 股票基本面與財報資料庫
 const FINANCIAL_DB = {
   '2455': {
     name: '全新',
@@ -72,7 +71,6 @@ const FINANCIAL_DB = {
   }
 };
 
-// 代理 Yahoo Finance 即時與近月行情
 async function fetchYahooQuote(symbol) {
   const suffixes = ['.TWO', '.TW'];
   for (const ext of suffixes) {
@@ -130,7 +128,7 @@ app.get('/api/quote', async (req, res) => {
         validPoints.push({
           date: new Date(timestamps[i] * 1000).toISOString().split('T')[0],
           close: Number(closes[i].toFixed(2)),
-          volumeLots: Math.round(volumes[i] / 1000), // 股轉張
+          volumeLots: Math.round(volumes[i] / 1000),
           high: Number((highs[i] || closes[i]).toFixed(2)),
           low: Number((lows[i] || closes[i]).toFixed(2))
         });
