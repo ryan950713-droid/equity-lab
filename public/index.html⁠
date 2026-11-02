@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>台股價值分析室 | Equity Lab Taiwan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#F4F7F5',
+              100: '#E6ECE8',
+              500: '#5B7A68',
+              600: '#486354',
+              700: '#354B3F',
+              800: '#27382F'
+            },
+            morandi: {
+              beige: '#F9F8F6',
+              card: '#FFFFFF',
+              border: '#E2E6E3',
+              subtext: '#687771'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-morandi-beige text-stone-800 antialiased min-h-screen">
+
+  <header class="bg-brand-700 text-white shadow-sm border-b border-brand-800">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-3">
+      <div>
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight">台股價值分析室 <span class="text-xs font-normal opacity-80 uppercase tracking-widest ml-1">Equity Lab Taiwan</span></h1>
+        <p class="text-xs text-brand-100 mt-0.5">TT 模型基本面估值 × 即時量價 × 產業魚骨圖分析</p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs text-brand-100">快捷觀察：</span>
+        <button onclick="searchStock('2455')" class="px-2.5 py-1 text-xs bg-brand-600 hover:bg-brand-500 rounded text-white transition">2455 全新</button>
+        <button onclick="searchStock('2317')" class="px-2.5 py-1 text-xs bg-brand-600 hover:bg-brand-500 rounded text-white transition">2317 鴻海</button>
+        <button onclick="searchStock('2330')" class="px-2.5 py-1 text-xs bg-brand-600 hover:bg-brand-500 rounded text-white transition">2330 台積電</button>
+        <button onclick="searchStock('1216')" class="px-2.5 py-1 text-xs bg-brand-600 hover:bg-brand-500 rounded text-white transition">1216 統一</button>
+        <button onclick="searchStock('3045')" class="px-2.5 py-1 text-xs bg-brand-600 hover:bg-brand-500 rounded text-white transition">3045 台灣大</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-morandi-border flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <input id="symbolInput" type="text" placeholder="輸入台股代號 (如 2455)" value="2455"
+               class="px-3 py-2 border border-morandi-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 w-full sm:w-48 font-mono font-medium">
+        <button onclick="searchStock(document.getElementById('symbolInput').value)"
+                class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition whitespace-nowrap">
+          取得估價
+        </button>
+      </div>
+      <div id="statusIndicator" class="text-xs text-morandi-subtext flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>資料來源：後端已連線即時行情與公開資訊觀測站</span>
+      </div>
+    </section>
+
+    <div id="loading" class="hidden text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-brand-500 border-t-transparent"></div>
+      <p class="text-sm text-morandi-subtext mt-2">正在抓取最新市場行情與財報模型數據...</p>
+    </div>
+
+    <div id="contentArea" class="space-y-6">
+      
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-morandi-border shadow-sm">
+          <div class="text-xs text-morandi-subtext font-medium">個股資訊</div>
+          <div class="text-xl font-bold mt-1 text-stone-900" id="stockName">2455 全新</div>
+          <div class="text-xs text-brand-600 mt-1" id="stockIndustry">光通訊磊晶</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-morandi-border shadow-sm">
+          <div class="text-xs text-morandi-subtext font-medium">最新收盤價 (元)</div>
+          <div class="text-2xl font-bold mt-1 text-stone-900" id="stockPrice">--</div>
+          <div class="text-xs mt-1 font-semibold" id="stockChange">--</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-morandi-border shadow-sm">
+          <div class="text-xs text-morandi-subtext font-medium">成交量 (張)</div>
+          <div class="text-xl font-bold mt-1 text-stone-900" id="stockVolume">--</div>
+          <div class="text-xs text-morandi-subtext mt-1" id="stockVolumeMA">5日: -- | 20日: --</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-morandi-border shadow-sm">
+          <div class="text-xs text-morandi-subtext font-medium">資料日期</div>
+          <div class="text-sm font-semibold mt-1 text-stone-900" id="quoteDate">--</div>
+          <div class="text-xs text-morandi-subtext mt-1" id="reportDate">財報期別: --</div>
+        </div>
+      </section>
+
+      <section class="bg-white p-6 rounded-xl border border-morandi-border shadow-sm space-y-5">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-morandi-border pb-3">
+          <div>
+            <h2 class="text-lg font-bold text-brand-800">TT 基本面估價模型推導</h2>
+            <p class="text-xs text-morandi-subtext">透明揭露每個計算步驟，排除其他權益雜音以真實反映母公司本業資產回報率</p>
+          </div>
+          <div class="mt-2 sm:mt-0 px-3 py-1 bg-brand-50 text-brand-700 text-xs rounded-full font-medium" id="ttConditionTag">
+            判定規則：--
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-lg bg-stone-50 border border-stone-200">
+            <span class="text-xs font-bold text-brand-700 uppercase tracking-wider block mb-1">步驟 A：調整每股淨值</span>
+            <div class="text-2xl font-bold text-stone-900" id="valAdjNav">-- 元</div>
+            <p class="text-xs text-morandi-subtext mt-2 leading-relaxed" id="detailAdjNav">
+              公式：(母公司權益 － 其他權益) ÷ 流通股數
+            </p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-stone-50 border border-stone-200">
+            <span class="text-xs font-bold text-brand-700 uppercase tracking-wider block mb-1">步驟 B：調整 ROE</span>
+            <div class="text-2xl font-bold text-stone-900" id="valAdjRoe">-- %</div>
+            <p class="text-xs text-morandi-subtext mt-2 leading-relaxed" id="detailAdjRoe">
+              公式：近四季淨利合計 ÷ 期初調整權益
+            </p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+            <span class="text-xs font-bold text-emerald-800 uppercase tracking-wider block mb-1">步驟 C：TT 基準價</span>
+            <div class="text-2xl font-bold text-emerald-800" id="valTtBasePrice">-- 元</div>
+            <p class="text-xs text-emerald-700 mt-2 leading-relaxed" id="detailTtRule">
+              依 ROE 級距進行分流定價
+            </p>
+          </div>
+        </div>
+
+        <div class="p-3 bg-brand-50 rounded-lg flex flex-col sm:flex-row justify-between items-center text-xs text-brand-800">
+          <div>當前市價對 TT 基準價之偏離：<span class="font-bold text-sm" id="premiumDiscountRate">--</span></div>
+          <div class="text-morandi-subtext mt-1 sm:mt-0">* 價值模型基準價反映公司清算與長線合理回報底限，成長股熱度常使市價存在溢價。</div>
+        </div>
+      </section>
+
+      <section class="bg-white p-6 rounded-xl border border-morandi-border shadow-sm space-y-4">
+        <h2 class="text-lg font-bold text-brand-800">五段價格區間與安全邊際階梯</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+          <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+            <div class="text-xs font-bold text-emerald-800">便宜價 (0.8x)</div>
+            <div class="text-base font-bold text-emerald-900 mt-1" id="priceCheap">--</div>
+            <div class="text-[10px] text-emerald-700">高度安全邊際</div>
+          </div>
+          <div class="p-3 rounded-lg bg-green-50 border border-green-200">
+            <div class="text-xs font-bold text-green-800">偏低價 (0.9x)</div>
+            <div class="text-base font-bold text-green-900 mt-1" id="priceLow">--</div>
+            <div class="text-[10px] text-green-700">具備布局空間</div>
+          </div>
+          <div class="p-3 rounded-lg bg-stone-100 border border-stone-300">
+            <div class="text-xs font-bold text-stone-800">合理價 (1.0x)</div>
+            <div class="text-base font-bold text-stone-900 mt-1" id="priceFair">--</div>
+            <div class="text-[10px] text-stone-600">模型基準定價</div>
+          </div>
+          <div class="p-3 rounded-lg bg-amber-50 border border-amber-200">
+            <div class="text-xs font-bold text-amber-800">偏高價 (1.15x)</div>
+            <div class="text-base font-bold text-amber-900 mt-1" id="priceHigh">--</div>
+            <div class="text-[10px] text-amber-700">分批減碼思考</div>
+          </div>
+          <div class="p-3 rounded-lg bg-rose-50 border border-rose-200 col-span-2 sm:col-span-1">
+            <div class="text-xs font-bold text-rose-800">瘋狂價 (1.3x)</div>
+            <div class="text-base font-bold text-rose-900 mt-1" id="priceCrazy">--</div>
+            <div class="text-[10px] text-rose-700">情緒推升警戒</div>
+          </div>
+        </div>
+
+        <div class="border-t border-morandi-border pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="text-stone-600">安全邊際 10% 買進價：<span class="font-bold text-stone-900" id="margin10">--</span> 元</div>
+          <div class="text-stone-600">安全邊際 20% 買進價：<span class="font-bold text-stone-900" id="margin20">--</span> 元</div>
+          <div class="text-stone-600">安全邊際 30% 買進價：<span class="font-bold text-stone-900" id="margin30">--</span> 元</div>
+        </div>
+      </section>
+
+      <section class="bg-white p-6 rounded-xl border border-morandi-border shadow-sm space-y-4">
+        <div class="flex justify-between items-center border-b border-morandi-border pb-3">
+          <div>
+            <h2 class="text-lg font-bold text-brand-800">獨立本益比估值系統 (P/E Valuation)</h2>
+            <p class="text-xs text-morandi-subtext">合理股價 ＝ 正常化 TTM EPS × 預期本益比倍數</p>
+          </div>
+          <div class="text-xs text-right">
+            <div class="text-morandi-subtext">TTM EPS</div>
+            <div class="font-bold text-base text-stone-900" id="peTtmEps">-- 元</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 rounded-lg bg-stone-50 border border-morandi-border">
+            <div class="text-xs font-bold text-stone-600">保守情境 (低標 PE)</div>
+            <div class="text-xl font-bold text-stone-800 mt-1" id="peValConservative">-- 元</div>
+            <p class="text-[11px] text-stone-500 mt-1">景氣下行或獲利趨緩假設</p>
+          </div>
+          <div class="p-4 rounded-lg bg-brand-50 border border-brand-200">
+            <div class="text-xs font-bold text-brand-700">中位合理情境 (基準 PE)</div>
+            <div class="text-xl font-bold text-brand-800 mt-1" id="peValFair">-- 元</div>
+            <p class="text-[11px] text-brand-600 mt-1">常態經營環境下合理倍數</p>
+          </div>
+          <div class="p-4 rounded-lg bg-stone-50 border border-morandi-border">
+            <div class="text-xs font-bold text-stone-600">樂觀成長情境 (高標 PE)</div>
+            <div class="text-xl font-bold text-stone-800 mt-1" id="peValOptimistic">-- 元</div>
+            <p class="text-[11px] text-stone-500 mt-1">市場題材與營運動能充沛
