@@ -6,7 +6,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+// 靜態目錄託管
 app.use(express.static(path.join(__dirname, 'public')));
+
+// 明確指定首頁路由，防止找不到檔案
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 const FINANCIAL_DB = {
   '2455': {
