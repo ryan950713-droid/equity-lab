@@ -183,6 +183,7 @@
             <p class="text-xs text-morandi-subtext">合理股價 ＝ 正常化 TTM EPS × 預期本益比倍數</p>
           </div>
           <div class="text-xs text-right">
+
             <div class="text-morandi-subtext">TTM EPS</div>
             <div class="font-bold text-base text-stone-900" id="peTtmEps">-- 元</div>
           </div>
